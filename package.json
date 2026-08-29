@@ -1,0 +1,11 @@
+{
+  "name": "vidanova-navigator",
+  "private": true,
+  "packageManager": "pnpm@10.14.0",
+  "scripts": {
+    "dev:frontend": "corepack pnpm --dir Frontend dev",
+    "dev:backend": "corepack pnpm --dir Backend dev",
+    "check": "corepack pnpm --dir Frontend check && corepack pnpm --dir Backend check",
+    "build": "corepack pnpm --dir Frontend build && corepack pnpm --dir Backend build"
+  }
+}

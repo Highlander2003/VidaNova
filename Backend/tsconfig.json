@@ -1,0 +1,14 @@
+{
+  "extends": "./.svelte-kit/tsconfig.json", // Hereda la configuración generada por SvelteKit.
+  "compilerOptions": {
+    "allowJs": true, // Permite usar archivos JavaScript junto con TypeScript.
+    "checkJs": true, // Comprueba los tipos de los archivos JavaScript.
+    "esModuleInterop": true, // Simplifica la interoperabilidad con módulos CommonJS.
+    "forceConsistentCasingInFileNames": true, // Exige respetar mayúsculas y minúsculas en rutas.
+    "resolveJsonModule": true, // Permite importar archivos JSON desde TypeScript.
+    "skipLibCheck": true, // Omite la comprobación interna de tipos de librerías externas.
+    "sourceMap": true, // Genera mapas para depurar el código fuente original.
+    "strict": true, // Activa todas las comprobaciones estrictas de TypeScript.
+    "moduleResolution": "bundler" // Resuelve módulos según Vite y el empaquetador.
+  }
+}
