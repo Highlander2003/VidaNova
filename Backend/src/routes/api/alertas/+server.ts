@@ -21,6 +21,9 @@ export const POST: RequestHandler = async ({ request }) => {
     });
   } catch (cause: unknown) {
     console.error("Error al analizar alertas:", cause);
-    return json({ error: "Error interno al analizar las alertas." }, { status: 500 });
+    return json(
+      { error: "Error interno al analizar las alertas." },
+      { status: 500 },
+    );
   }
 };

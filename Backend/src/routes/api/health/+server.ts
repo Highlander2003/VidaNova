@@ -1,5 +1,8 @@
-import { json } from '@sveltejs/kit';
+import { json } from "@sveltejs/kit";
 
 export function GET() {
-  return json({ status: 'ok' }, { headers: { 'Access-Control-Allow-Origin': '*' } });
+  return json(
+    { status: "ok" },
+    { headers: { "Access-Control-Allow-Origin": "*" } },
+  );
 }

@@ -1,14 +1,262 @@
 <script lang="ts">
-  import AppFrame from '$lib/components/AppFrame.svelte';
+  import AppFrame from "$lib/components/AppFrame.svelte";
   const patients = [
-    ['ML','María Fernanda López','VN-260812-041 · 57 años','Quimioterapia','Cáncer de mama HER2+','Alta · 48 h','Vence hoy','Posible omisión','Validar orden de catéter'],
-    ['CG','Carlos Andrés Gómez','VN-260812-036 · 64 años','Cirugía','Adenocarcinoma de colon','Media · 7 días','2 días vencido','Conciliada','Escalar autorización'],
-    ['AR','Ana Lucía Rodríguez','VN-260811-118 · 48 años','Paciente sospechoso','Lesión pulmonar sospechosa','Alta · 72 h','Vence en 20 h','Conciliada','Confirmar biopsia'],
-    ['JM','Jorge Iván Martínez','VN-260811-104 · 71 años','Paciente prevalente','Cáncer de próstata','Programada','Vence en 3 días','Por confirmar','Revisar solicitud de imagen'],
-    ['SP','Sandra Patricia Pérez','VN-260810-089 · 39 años','Patología','Linfoma Hodgkin','Media · 7 días','En tiempo','Descartada','Esperar inmunohistoquímica']
+    [
+      "ML",
+      "María Fernanda López",
+      "VN-260812-041 · 57 años",
+      "Quimioterapia",
+      "Cáncer de mama HER2+",
+      "Alta · 48 h",
+      "Vence hoy",
+      "Posible omisión",
+      "Validar orden de catéter",
+    ],
+    [
+      "CG",
+      "Carlos Andrés Gómez",
+      "VN-260812-036 · 64 años",
+      "Cirugía",
+      "Adenocarcinoma de colon",
+      "Media · 7 días",
+      "2 días vencido",
+      "Conciliada",
+      "Escalar autorización",
+    ],
+    [
+      "AR",
+      "Ana Lucía Rodríguez",
+      "VN-260811-118 · 48 años",
+      "Paciente sospechoso",
+      "Lesión pulmonar sospechosa",
+      "Alta · 72 h",
+      "Vence en 20 h",
+      "Conciliada",
+      "Confirmar biopsia",
+    ],
+    [
+      "JM",
+      "Jorge Iván Martínez",
+      "VN-260811-104 · 71 años",
+      "Paciente prevalente",
+      "Cáncer de próstata",
+      "Programada",
+      "Vence en 3 días",
+      "Por confirmar",
+      "Revisar solicitud de imagen",
+    ],
+    [
+      "SP",
+      "Sandra Patricia Pérez",
+      "VN-260810-089 · 39 años",
+      "Patología",
+      "Linfoma Hodgkin",
+      "Media · 7 días",
+      "En tiempo",
+      "Descartada",
+      "Esperar inmunohistoquímica",
+    ],
   ];
 </script>
-<AppFrame active="Pacientes" title="Pacientes y casos activos"><div class="head"><div><p class="eyebrow">REGISTRO MAESTRO</p><h1>Pacientes y casos activos</h1><p class="sub">Una vista longitudinal por paciente, con episodios separados y próximos pasos visibles.</p></div><button class="primary">+ Crear caso</button></div><div class="filters"><button class="selected">Todos <b>124</b></button><button>Críticos <b>8</b></button><button>Vencidos <b>9</b></button><button>Sin responsable <b>3</b></button><button>Con barrera <b>14</b></button></div><section class="table"><header><span>PACIENTE</span><span>RUTA / DIAGNÓSTICO</span><span>PRIORIDAD CLÍNICA</span><span>PLAZO OPERATIVO</span><span>CONCILIACIÓN</span><span>PRÓXIMA ACCIÓN</span></header>{#each patients as patient}<article><div class="person"><i>{patient[0]}</i><strong>{patient[1]}<small>{patient[2]}</small></strong></div><div><strong>{patient[3]}</strong><small>{patient[4]}</small></div><span class="pill red">● {patient[5]}</span><span class="pill {patient[6].includes('Vence') || patient[6].includes('vencido') ? 'red' : 'green'}">● {patient[6]}</span><span class="pill {patient[7] === 'Conciliada' ? 'green' : 'red'}">● {patient[7]}</span><div><strong>{patient[8]}</strong><small>Hace {patient[0] === 'ML' ? '18 min' : '31 min'}</small></div></article>{/each}</section></AppFrame>
+
+<AppFrame active="Pacientes" title="Pacientes y casos activos"
+  ><div class="head">
+    <div>
+      <p class="eyebrow">REGISTRO MAESTRO</p>
+      <h1>Pacientes y casos activos</h1>
+      <p class="sub">
+        Una vista longitudinal por paciente, con episodios separados y próximos
+        pasos visibles.
+      </p>
+    </div>
+    <button class="primary">+ Crear caso</button>
+  </div>
+  <div class="filters">
+    <button class="selected">Todos <b>124</b></button><button
+      >Críticos <b>8</b></button
+    ><button>Vencidos <b>9</b></button><button>Sin responsable <b>3</b></button
+    ><button>Con barrera <b>14</b></button>
+  </div>
+  <section class="table">
+    <header>
+      <span>PACIENTE</span><span>RUTA / DIAGNÓSTICO</span><span
+        >PRIORIDAD CLÍNICA</span
+      ><span>PLAZO OPERATIVO</span><span>CONCILIACIÓN</span><span
+        >PRÓXIMA ACCIÓN</span
+      >
+    </header>
+    {#each patients as patient}<article>
+        <div class="person">
+          <i>{patient[0]}</i><strong
+            >{patient[1]}<small>{patient[2]}</small></strong
+          >
+        </div>
+        <div><strong>{patient[3]}</strong><small>{patient[4]}</small></div>
+        <span class="pill red">● {patient[5]}</span><span
+          class="pill {patient[6].includes('Vence') ||
+          patient[6].includes('vencido')
+            ? 'red'
+            : 'green'}">● {patient[6]}</span
+        ><span class="pill {patient[7] === 'Conciliada' ? 'green' : 'red'}"
+          >● {patient[7]}</span
+        >
+        <div>
+          <strong>{patient[8]}</strong><small
+            >Hace {patient[0] === "ML" ? "18 min" : "31 min"}</small
+          >
+        </div>
+      </article>{/each}
+  </section></AppFrame
+>
+
 <style>
-  .head{display:flex;justify-content:space-between;align-items:end;gap:20px}.eyebrow{color:#008d9b;font-size:10px;letter-spacing:1.2px;font-weight:800;margin:0 0 12px}h1{font-size:35px}.sub{color:#8192a5;font-size:13px;margin:9px 0 28px}.primary{border:0;border-radius:10px;background:#327cbb;color:#fff;padding:15px 19px;font-size:11px;font-weight:800;box-shadow:0 8px 18px #327cbb30}.filters{display:flex;gap:10px;margin:0 0 20px}.filters button{border:1px solid #dce5ed;background:#fff;border-radius:9px;padding:11px 14px;color:#738195;font-size:10px;font-weight:800}.filters button b{margin-left:8px;background:#edf1f5;padding:3px 6px;border-radius:7px}.filters .selected{background:#0c294b;color:#fff}.table{overflow:hidden;border:1px solid #dfe8ef;border-radius:16px;background:#fff}.table header,.table article{display:grid;grid-template-columns:1.45fr 1.25fr .9fr .9fr .9fr 1.15fr;gap:18px;align-items:center}.table header{min-height:47px;padding:0 20px;border-bottom:1px solid #dfe8ef;color:#78889c;font-size:9px;font-weight:800}.table article{min-height:86px;padding:13px 20px;border-bottom:1px solid #edf1f4;color:#1b3957;font-size:10px}.table article:last-child{border:0}.person{display:flex;align-items:center;gap:12px}.person i{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:#eaf5f8;color:#234963;font-style:normal;font-weight:800}.table strong{display:block;font-size:10px}.table small{display:block;margin-top:5px;color:#8593a3;font-size:9px;font-weight:400}.pill{width:max-content;padding:5px 8px;border-radius:12px;font-size:9px;font-weight:700}.red{background:#fff0f2;color:#ce3e55;border:1px solid #f3cdd4}.green{background:#eaf9f4;color:#188d6c;border:1px solid #c7eadd}@media(max-width:900px){.table{overflow-x:auto}.table header,.table article{min-width:990px}.head{align-items:start;flex-direction:column}.filters{overflow-x:auto}.filters button{white-space:nowrap}}
+  .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 20px;
+  }
+  .eyebrow {
+    color: #008d9b;
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    font-weight: 800;
+    margin: 0 0 12px;
+  }
+  h1 {
+    font-size: 35px;
+  }
+  .sub {
+    color: #8192a5;
+    font-size: 13px;
+    margin: 9px 0 28px;
+  }
+  .primary {
+    border: 0;
+    border-radius: 10px;
+    background: #327cbb;
+    color: #fff;
+    padding: 15px 19px;
+    font-size: 11px;
+    font-weight: 800;
+    box-shadow: 0 8px 18px #327cbb30;
+  }
+  .filters {
+    display: flex;
+    gap: 10px;
+    margin: 0 0 20px;
+  }
+  .filters button {
+    border: 1px solid #dce5ed;
+    background: #fff;
+    border-radius: 9px;
+    padding: 11px 14px;
+    color: #738195;
+    font-size: 10px;
+    font-weight: 800;
+  }
+  .filters button b {
+    margin-left: 8px;
+    background: #edf1f5;
+    padding: 3px 6px;
+    border-radius: 7px;
+  }
+  .filters .selected {
+    background: #0c294b;
+    color: #fff;
+  }
+  .table {
+    overflow: hidden;
+    border: 1px solid #dfe8ef;
+    border-radius: 16px;
+    background: #fff;
+  }
+  .table header,
+  .table article {
+    display: grid;
+    grid-template-columns: 1.45fr 1.25fr 0.9fr 0.9fr 0.9fr 1.15fr;
+    gap: 18px;
+    align-items: center;
+  }
+  .table header {
+    min-height: 47px;
+    padding: 0 20px;
+    border-bottom: 1px solid #dfe8ef;
+    color: #78889c;
+    font-size: 9px;
+    font-weight: 800;
+  }
+  .table article {
+    min-height: 86px;
+    padding: 13px 20px;
+    border-bottom: 1px solid #edf1f4;
+    color: #1b3957;
+    font-size: 10px;
+  }
+  .table article:last-child {
+    border: 0;
+  }
+  .person {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .person i {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #eaf5f8;
+    color: #234963;
+    font-style: normal;
+    font-weight: 800;
+  }
+  .table strong {
+    display: block;
+    font-size: 10px;
+  }
+  .table small {
+    display: block;
+    margin-top: 5px;
+    color: #8593a3;
+    font-size: 9px;
+    font-weight: 400;
+  }
+  .pill {
+    width: max-content;
+    padding: 5px 8px;
+    border-radius: 12px;
+    font-size: 9px;
+    font-weight: 700;
+  }
+  .red {
+    background: #fff0f2;
+    color: #ce3e55;
+    border: 1px solid #f3cdd4;
+  }
+  .green {
+    background: #eaf9f4;
+    color: #188d6c;
+    border: 1px solid #c7eadd;
+  }
+  @media (max-width: 900px) {
+    .table {
+      overflow-x: auto;
+    }
+    .table header,
+    .table article {
+      min-width: 990px;
+    }
+    .head {
+      align-items: start;
+      flex-direction: column;
+    }
+    .filters {
+      overflow-x: auto;
+    }
+    .filters button {
+      white-space: nowrap;
+    }
+  }
 </style>

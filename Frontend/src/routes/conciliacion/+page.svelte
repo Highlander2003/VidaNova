@@ -409,100 +409,110 @@
     {#if selectedHistory}
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="modal-overlay" onclick={() => selectedHistoryId = null}>
-        <div class="modal-content analysis" onclick={(e) => e.stopPropagation()}>
-          <button class="modal-close" aria-label="Cerrar modal" onclick={() => selectedHistoryId = null}>×</button>
+      <div class="modal-overlay" onclick={() => (selectedHistoryId = null)}>
+        <div
+          class="modal-content analysis"
+          onclick={(e) => e.stopPropagation()}
+        >
+          <button
+            class="modal-close"
+            aria-label="Cerrar modal"
+            onclick={() => (selectedHistoryId = null)}>×</button
+          >
           <h2 class="modal-title">{selectedHistory.patientName}</h2>
           <div class="stats">
-          <article>
-            Coincidencias<strong>{matches.length}</strong><small
-              >{matches.length
-                ? "Encontradas en Conducta a Seguir"
-                : "Sin palabras clave en Conducta a Seguir"}</small
-            >
-          </article>
-          <article>
-            Alerta principal<strong class:danger={matches[0]?.level === "ROJO"}
-              >{matches[0]?.level ?? "NORMAL"}</strong
-            ><small
-              >{matches[0]
-                ? (matches[0].fraseClave ?? matches[0].phrase ?? "Sin frase")
-                : "Sin alertas"}</small
-            >
-          </article>
-          <article>
-            Historia analizada<strong>✓</strong><small
-              >{selectedHistory.label} de {selectedDocument?.histories
-                .length}</small
-            >
-          </article>
-        </div>
-        <div class="conduct">
-          <p class="eyebrow">CONTENIDO CLÍNICO ANALIZADO</p>
-          <div class="conduct-copy">
-            {#each conductLines(selectedHistory.conduct) as line}<p>
-                {#each conductParts(line, matches) as part}<span
-                    class:rojo={part.level === "ROJO"}
-                    class:ambar={part.level === "AMARILLO"}
-                    class:verde={part.level === "VERDE"}>{part.text}</span
-                  >{/each}
-              </p>{/each}
+            <article>
+              Coincidencias<strong>{matches.length}</strong><small
+                >{matches.length
+                  ? "Encontradas en Conducta a Seguir"
+                  : "Sin palabras clave en Conducta a Seguir"}</small
+              >
+            </article>
+            <article>
+              Alerta principal<strong
+                class:danger={matches[0]?.level === "ROJO"}
+                >{matches[0]?.level ?? "NORMAL"}</strong
+              ><small
+                >{matches[0]
+                  ? (matches[0].fraseClave ?? matches[0].phrase ?? "Sin frase")
+                  : "Sin alertas"}</small
+              >
+            </article>
+            <article>
+              Historia analizada<strong>✓</strong><small
+                >{selectedHistory.label} de {selectedDocument?.histories
+                  .length}</small
+              >
+            </article>
           </div>
-        </div>
-        <div class="columns">
-          <section class="results">
-            <p class="eyebrow">RESULTADOS DEL ANÁLISIS</p>
-            <h2>
-              {matches.length
-                ? "Alertas y contextos encontrados"
-                : "Sin alertas detectadas"}
-            </h2>
-            {#each matches as match}<article
-                class:high={match.level === "ROJO"}
-                class:medium={match.level === "AMARILLO"}
-                class:low={match.level === "VERDE"}
-              >
-                <div class="result-heading">
-                  <span class="badge">{match.level}</span><strong
-                    ><u
-                      >{match.fraseClave ??
-                        match.phrase ??
-                        "Frase no disponible"}</u
-                    ></strong
-                  >
-                </div>
-                <p class="context-label">Contexto encontrado</p>
-                <p class="context">
-                  “{#each contextParts(match, selectedHistory.conduct) as part}{#if part.highlighted}<mark
-                        >{part.text}</mark
-                      >{:else}{part.text}{/if}{/each}”
-                </p>
-              </article>{/each}{#if !matches.length}<p class="empty">
-                La conducta fue leída, pero no contiene palabras clave de la
-                matriz actual.
-              </p>{/if}
-          </section>
-          <aside class="explain">
-            <p class="eyebrow">SIGUIENTE PASO</p>
-            <h2>Revisión humana</h2>
-            <p>
-              Estas coincidencias son señales operativas, no diagnósticos ni
-              órdenes médicas.
-            </p>
-            <div class="actions">
-              <button class="primary" onclick={() => (decision = "confirmada")}
-                >Confirmar alerta</button
-              ><button onclick={() => (decision = "descartada")}
-                >Descartar</button
-              ><button onclick={() => (decision = "aclaracion")}
-                >Solicitar aclaración</button
-              >
+          <div class="conduct">
+            <p class="eyebrow">CONTENIDO CLÍNICO ANALIZADO</p>
+            <div class="conduct-copy">
+              {#each conductLines(selectedHistory.conduct) as line}<p>
+                  {#each conductParts(line, matches) as part}<span
+                      class:rojo={part.level === "ROJO"}
+                      class:ambar={part.level === "AMARILLO"}
+                      class:verde={part.level === "VERDE"}>{part.text}</span
+                    >{/each}
+                </p>{/each}
             </div>
-            {#if decision}<small class="feedback"
-                >Decisión registrada: {decision}.</small
-              >{/if}
-          </aside>
-        </div>
+          </div>
+          <div class="columns">
+            <section class="results">
+              <p class="eyebrow">RESULTADOS DEL ANÁLISIS</p>
+              <h2>
+                {matches.length
+                  ? "Alertas y contextos encontrados"
+                  : "Sin alertas detectadas"}
+              </h2>
+              {#each matches as match}<article
+                  class:high={match.level === "ROJO"}
+                  class:medium={match.level === "AMARILLO"}
+                  class:low={match.level === "VERDE"}
+                >
+                  <div class="result-heading">
+                    <span class="badge">{match.level}</span><strong
+                      ><u
+                        >{match.fraseClave ??
+                          match.phrase ??
+                          "Frase no disponible"}</u
+                      ></strong
+                    >
+                  </div>
+                  <p class="context-label">Contexto encontrado</p>
+                  <p class="context">
+                    “{#each contextParts(match, selectedHistory.conduct) as part}{#if part.highlighted}<mark
+                          >{part.text}</mark
+                        >{:else}{part.text}{/if}{/each}”
+                  </p>
+                </article>{/each}{#if !matches.length}<p class="empty">
+                  La conducta fue leída, pero no contiene palabras clave de la
+                  matriz actual.
+                </p>{/if}
+            </section>
+            <aside class="explain">
+              <p class="eyebrow">SIGUIENTE PASO</p>
+              <h2>Revisión humana</h2>
+              <p>
+                Estas coincidencias son señales operativas, no diagnósticos ni
+                órdenes médicas.
+              </p>
+              <div class="actions">
+                <button
+                  class="primary"
+                  onclick={() => (decision = "confirmada")}
+                  >Confirmar alerta</button
+                ><button onclick={() => (decision = "descartada")}
+                  >Descartar</button
+                ><button onclick={() => (decision = "aclaracion")}
+                  >Solicitar aclaración</button
+                >
+              </div>
+              {#if decision}<small class="feedback"
+                  >Decisión registrada: {decision}.</small
+                >{/if}
+            </aside>
+          </div>
         </div>
       </div>
     {/if}

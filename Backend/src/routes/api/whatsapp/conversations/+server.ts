@@ -5,6 +5,14 @@ import { whatsappBusinessService } from "$lib/server/whatsapp/WhatsAppBusinessSe
 export const GET: RequestHandler = ({ url }) => {
   const phone = url.searchParams.get("phone");
   const headers = { "Access-Control-Allow-Origin": "*" };
-  if (phone) return json(whatsappBusinessService.markRead(phone) || null, { headers });
-  return json({ conversations: whatsappBusinessService.listConversations(), unreadCount: whatsappBusinessService.getUnreadCount(), configured: whatsappBusinessService.configured }, { headers });
+  if (phone)
+    return json(whatsappBusinessService.markRead(phone) || null, { headers });
+  return json(
+    {
+      conversations: whatsappBusinessService.listConversations(),
+      unreadCount: whatsappBusinessService.getUnreadCount(),
+      configured: whatsappBusinessService.configured,
+    },
+    { headers },
+  );
 };
