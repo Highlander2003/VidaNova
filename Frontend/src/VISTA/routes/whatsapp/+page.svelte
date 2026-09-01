@@ -1,67 +1,11 @@
 <script lang="ts">
-  import AppFrame from "$lib/components/AppFrame.svelte";
+  import AppFrame from "$vista/components/AppFrame.svelte";
   import { onMount } from "svelte";
+  import { WhatsappController } from "$controlador/whatsapp.svelte";
 
-  type Message = {
-    id: string;
-    from: string;
-    text: string;
-    timestamp: string;
-    direction: "inbound" | "outbound";
-    read: boolean;
-  };
-  type Conversation = {
-    id: string;
-    phone: string;
-    name?: string;
-    lastMessage?: Message;
-    unreadCount: number;
-    messages: Message[];
-  };
-  const backendUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:3001";
-  let conversations: Conversation[] = [];
-  let selectedPhone = "";
-  let backendConnected = false;
-  let apiConfigured = false;
-  $: selectedConversation = conversations.find(
-    (conversation) => conversation.phone === selectedPhone,
-  );
-  $: unreadCount = conversations.reduce(
-    (total, conversation) => total + conversation.unreadCount,
-    0,
-  );
+  const c = new WhatsappController();
 
-  async function loadConversations() {
-    try {
-      const response = await fetch(`${backendUrl}/api/whatsapp/conversations`);
-      if (!response.ok) throw new Error("Backend no Conectado");
-      const result = (await response.json()) as {
-        conversations: Conversation[];
-        configured: boolean;
-      };
-      conversations = result.conversations;
-      apiConfigured = result.configured;
-      backendConnected = true;
-      if (!selectedPhone && conversations[0])
-        selectedPhone = conversations[0].phone;
-    } catch {
-      backendConnected = false;
-    }
-  }
-
-  async function selectConversation(phone: string) {
-    selectedPhone = phone;
-    await fetch(
-      `${backendUrl}/api/whatsapp/conversations?phone=${encodeURIComponent(phone)}`,
-    );
-    await loadConversations();
-  }
-
-  onMount(() => {
-    void loadConversations();
-    const timer = window.setInterval(loadConversations, 15_000);
-    return () => window.clearInterval(timer);
-  });
+  onMount(() => c.startPolling());
 </script>
 
 <AppFrame active="CRM WhatsApp" title="CRM de WhatsApp">
@@ -77,7 +21,7 @@
     <span class="connected"
       >● WhatsApp oficial<br />
       <small
-        >{backendConnected && apiConfigured
+        >{c.backendConnected && c.apiConfigured
           ? "API conectada"
           : "Backend no Conectado"}</small
       >
@@ -122,13 +66,13 @@
   <div class="chat-layout">
     <aside class="inbox">
       <p class="eyebrow">BANDEJA COMPARTIDA</p>
-      <h2>Conversaciones <b class="unread-total">{unreadCount}</b></h2>
+      <h2>Conversaciones <b class="unread-total">{c.unreadCount}</b></h2>
       <input placeholder="⌕  Buscar paciente o etiqueta" />
-      {#each conversations as conversation}
+      {#each c.conversations as conversation}
         <button
-          class:chosen={conversation.phone === selectedPhone}
+          class:chosen={conversation.phone === c.selectedPhone}
           class="chat"
-          onclick={() => selectConversation(conversation.phone)}
+          onclick={() => c.selectConversation(conversation.phone)}
           ><i
             >{(conversation.name || conversation.phone)
               .slice(0, 2)
@@ -158,12 +102,12 @@
       {/each}
     </aside>
     <section class="messages waiting-panel">
-      {#if selectedConversation}<header class="conversation-header">
+      {#if c.selectedConversation}<header class="conversation-header">
           <strong
-            >{selectedConversation.name || selectedConversation.phone}</strong
-          ><small>{selectedConversation.phone}</small>
+            >{c.selectedConversation.name || c.selectedConversation.phone}</strong
+          ><small>{c.selectedConversation.phone}</small>
         </header>
-        {#each selectedConversation.messages as message}<div
+        {#each c.selectedConversation.messages as message}<div
             class:outbound={message.direction === "outbound"}
             class="message"
           >
@@ -180,9 +124,9 @@
         </div>{/if}
     </section>
     <aside class="contact waiting-panel">
-      {#if selectedConversation}<div class="waiting-state">
-          <strong>{selectedConversation.name || "Paciente sin nombre"}</strong
-          ><small>WhatsApp Business · {selectedConversation.phone}</small>
+      {#if c.selectedConversation}<div class="waiting-state">
+          <strong>{c.selectedConversation.name || "Paciente sin nombre"}</strong
+          ><small>WhatsApp Business · {c.selectedConversation.phone}</small>
         </div>{:else}<div class="waiting-state">
           <strong>Sin paciente seleccionado</strong><small
             >La información del paciente se mostrará al recibir una

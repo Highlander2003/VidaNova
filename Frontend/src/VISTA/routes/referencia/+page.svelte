@@ -1,29 +1,6 @@
 <script lang="ts">
-  import AppFrame from "$lib/components/AppFrame.svelte";
-
-  const referrals = [
-    [
-      "AR",
-      "Ana Lucía Rodríguez",
-      "Referencia a Neumología",
-      "Vence en 20 h",
-      "Alta",
-    ],
-    [
-      "SP",
-      "Sandra Patricia Pérez",
-      "Interconsulta a Hematología",
-      "En tiempo",
-      "Media",
-    ],
-    [
-      "JM",
-      "Jorge Iván Martínez",
-      "Referencia a Urología",
-      "Vence en 3 días",
-      "Media",
-    ],
-  ];
+  import AppFrame from "$vista/components/AppFrame.svelte";
+  import { referrals } from "$modelo/referencia";
 </script>
 
 <AppFrame active="Referencia" title="Referencias y remisiones">

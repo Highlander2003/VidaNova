@@ -1,62 +1,6 @@
 <script lang="ts">
-  import AppFrame from "$lib/components/AppFrame.svelte";
-  const patients = [
-    [
-      "ML",
-      "María Fernanda López",
-      "VN-260812-041 · 57 años",
-      "Quimioterapia",
-      "Cáncer de mama HER2+",
-      "Alta · 48 h",
-      "Vence hoy",
-      "Posible omisión",
-      "Validar orden de catéter",
-    ],
-    [
-      "CG",
-      "Carlos Andrés Gómez",
-      "VN-260812-036 · 64 años",
-      "Cirugía",
-      "Adenocarcinoma de colon",
-      "Media · 7 días",
-      "2 días vencido",
-      "Conciliada",
-      "Escalar autorización",
-    ],
-    [
-      "AR",
-      "Ana Lucía Rodríguez",
-      "VN-260811-118 · 48 años",
-      "Paciente sospechoso",
-      "Lesión pulmonar sospechosa",
-      "Alta · 72 h",
-      "Vence en 20 h",
-      "Conciliada",
-      "Confirmar biopsia",
-    ],
-    [
-      "JM",
-      "Jorge Iván Martínez",
-      "VN-260811-104 · 71 años",
-      "Paciente prevalente",
-      "Cáncer de próstata",
-      "Programada",
-      "Vence en 3 días",
-      "Por confirmar",
-      "Revisar solicitud de imagen",
-    ],
-    [
-      "SP",
-      "Sandra Patricia Pérez",
-      "VN-260810-089 · 39 años",
-      "Patología",
-      "Linfoma Hodgkin",
-      "Media · 7 días",
-      "En tiempo",
-      "Descartada",
-      "Esperar inmunohistoquímica",
-    ],
-  ];
+  import AppFrame from "$vista/components/AppFrame.svelte";
+  import { patients } from "$modelo/pacientes";
 </script>
 
 <AppFrame active="Pacientes" title="Pacientes y casos activos"

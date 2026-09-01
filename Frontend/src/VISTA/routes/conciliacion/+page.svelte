@@ -1,391 +1,15 @@
 <script lang="ts">
-  import AppFrame from "$lib/components/AppFrame.svelte";
+  import AppFrame from "$vista/components/AppFrame.svelte";
   import { onMount } from "svelte";
+  import { ConciliacionController } from "$controlador/conciliacion.svelte";
+  import { conductLines, conductParts, contextParts } from "$modelo/conciliacion";
 
-  const backendUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:3001";
-
-  type Level = "ROJO" | "AMARILLO" | "VERDE";
-  type Match = {
-    level: Level;
-    colorEmoji?: string;
-    fraseClave?: string;
-    phrase?: string;
-    context?: string;
-  };
-  type ApiMatch = { nivel: Level; colorEmoji?: string; fraseClave?: string };
-  type DictionaryEntry = {
-    id: number;
-    phrase: string;
-    pattern: string;
-    level: Level;
-  };
-  type DocumentItem = {
-    id: number;
-    name: string;
-    status: "pendiente" | "procesando" | "listo" | "error";
-    histories: HistoryItem[];
-    error?: string;
-  };
-  type HistoryItem = {
-    id: number;
-    label: string;
-    patientName: string;
-    text: string;
-    conduct: string;
-    matches: Match[];
-  };
-
-  let dictionary: DictionaryEntry[] = [
-    ["cat[eé]ter venoso implantable", "ROJO"],
-    ["urgente", "ROJO"],
-    ["falla respiratoria", "ROJO"],
-    ["deterioro cl[ií]nico", "ROJO"],
-    ["ingreso hospitalario", "ROJO"],
-    ["hospitalizado", "ROJO"],
-    ["\\bUCI\\b", "ROJO"],
-    ["urgencia vital", "ROJO"],
-    ["shock", "ROJO"],
-    ["insuficiencia", "ROJO"],
-    ["hemorragia", "ROJO"],
-    ["paro cardiorrespiratorio", "ROJO"],
-    ["si persiste el dolor", "AMARILLO"],
-    ["nueva biopsia", "AMARILLO"],
-    ["control estricto", "AMARILLO"],
-    ["revisar en", "AMARILLO"],
-    ["segunda opini[oó]n", "AMARILLO"],
-    ["manejo ambulatorio", "AMARILLO"],
-    ["falta de respuesta", "AMARILLO"],
-    ["procedimiento programado", "AMARILLO"],
-    ["control en(?!\\s+\\d+\\s+d[ií]as)", "AMARILLO"],
-    ["se discute caso", "AMARILLO"],
-    ["evaluaci[oó]n adicional", "AMARILLO"],
-    ["biopsia guiada", "VERDE"],
-    ["hallazgo sospechoso", "VERDE"],
-    ["evoluci[oó]n favorable", "VERDE"],
-    ["sin complicaciones", "VERDE"],
-    ["tratamiento establecido", "VERDE"],
-    ["derivaci[oó]n a especialista", "VERDE"],
-    ["control en \\d+ d[ií]as", "VERDE"],
-    ["paciente estable", "VERDE"],
-    ["citolog[ií]a", "VERDE"],
-    ["ex[aá]menes de laboratorio", "VERDE"],
-    ["manejo sintom[aá]tico", "VERDE"],
-    ["alta m[eé]dica", "VERDE"],
-  ].map(([pattern, level], index) => ({
-    id: index + 1,
-    phrase: displayPhrase(pattern),
-    pattern,
-    level: level as Level,
-  }));
-  const priorities: Record<Level, number> = { ROJO: 1, AMARILLO: 2, VERDE: 3 };
-
-  let dictionaryOpen = false;
-  let editingEntryId: number | null = null;
-  let draftPhrase = "";
-  let draftLevel: Level = "AMARILLO";
-
-  let documents: DocumentItem[] = [];
-  let selectedDocumentId: number | null = null;
-  let selectedHistoryId: number | null = null;
-  let error = "";
-  let decision = "";
-  let backendConnected = false;
-
-  function normalizeMatches(matches: ApiMatch[]): Match[] {
-    return matches.map((match) => ({
-      level: match.nivel,
-      colorEmoji: match.colorEmoji,
-      fraseClave: match.fraseClave,
-    }));
-  }
-
-  $: selectedDocument = documents.find(
-    (document) => document.id === selectedDocumentId,
-  );
-  $: selectedHistory =
-    selectedDocument?.histories.find(
-      (history) => history.id === selectedHistoryId,
-    ) ?? null;
-  $: matches = selectedHistory?.matches ?? [];
-
-  async function refreshMatches() {
-    for (const document of documents) {
-      try {
-        const response = await fetch(`${backendUrl}/api/conciliacion/analyze`, {
-          method: "POST",
-          body: createAnalysisForm(
-            await fetch(
-              `/api/doc-pdf?name=${encodeURIComponent(document.name)}`,
-            ).then((result) => result.blob()),
-            document.name,
-          ),
-        });
-        if (!response.ok) continue;
-        const result = (await response.json()) as {
-          histories: Array<
-            Omit<HistoryItem, "matches"> & { matches: ApiMatch[] }
-          >;
-        };
-        documents = documents.map((item) =>
-          item.id === document.id
-            ? {
-                ...item,
-                histories: result.histories.map((history, index) => ({
-                  ...history,
-                  id: document.id + index + 1,
-                  matches: normalizeMatches(history.matches),
-                })),
-              }
-            : item,
-        );
-      } catch {
-        backendConnected = false;
-      }
-    }
-  }
-
-  function createAnalysisForm(file: Blob, name: string): FormData {
-    const formData = new FormData();
-    formData.append(
-      "file",
-      new File([file], name, { type: "application/pdf" }),
-    );
-    formData.append("dictionary", JSON.stringify(dictionary));
-    return formData;
-  }
-
-  async function checkBackend() {
-    try {
-      const response = await fetch(`${backendUrl}/api/health`);
-      backendConnected = response.ok;
-    } catch {
-      backendConnected = false;
-    }
-  }
-
-  function startEdit(entry: DictionaryEntry) {
-    editingEntryId = entry.id;
-    draftPhrase = entry.phrase;
-    draftLevel = entry.level;
-  }
-
-  function saveEntry() {
-    const phrase = draftPhrase.trim();
-    if (!phrase) return;
-    const entry = {
-      phrase,
-      pattern: phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-      level: draftLevel,
-    };
-    if (editingEntryId === null)
-      dictionary = [...dictionary, { ...entry, id: Date.now() }];
-    else
-      dictionary = dictionary.map((item) =>
-        item.id === editingEntryId ? { ...item, ...entry } : item,
-      );
-    editingEntryId = null;
-    draftPhrase = "";
-    refreshMatches();
-  }
-
-  function deleteEntry(id: number) {
-    dictionary = dictionary.filter((entry) => entry.id !== id);
-    if (editingEntryId === id) editingEntryId = null;
-    refreshMatches();
-  }
-
-  function displayPhrase(phrase: string): string {
-    return phrase
-      .replace(/\\b/g, "")
-      .replace(/\(\?![^)]*\)/g, "")
-      .replace(/\\d\+/g, "número")
-      .replace(
-        /\[([^\]]+)\]/g,
-        (_match, options: string) =>
-          [...options].find((letter) => "áéíóúÁÉÍÓÚ".includes(letter)) ??
-          options[0],
-      )
-      .replace(/[()?!]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-
-  function normalizeText(content: string): string {
-    return content
-      .normalize("NFC")
-      .replace(/\s+/g, " ")
-      .trim()
-      .toLocaleLowerCase("es");
-  }
-
-  function contextParts(
-    match: Match,
-    content: string,
-  ): Array<{ text: string; highlighted: boolean }> {
-    const phrase = match.fraseClave ?? match.phrase ?? "";
-    if (!phrase) return [{ text: content, highlighted: false }];
-    const start = content
-      .toLocaleLowerCase("es")
-      .indexOf(phrase.toLocaleLowerCase("es"));
-    if (start < 0) return [{ text: content, highlighted: false }];
-    return [
-      { text: content.slice(0, start), highlighted: false },
-      { text: content.slice(start, start + phrase.length), highlighted: true },
-      { text: content.slice(start + phrase.length), highlighted: false },
-    ];
-  }
-
-  function conductLines(content: string): string[] {
-    return content
-      .split(/\r?\n/)
-      .map((line) => line.trimEnd())
-      .filter(
-        (line, index, lines) =>
-          line.length > 0 || (index > 0 && index < lines.length - 1),
-      );
-  }
-
-  function conductParts(
-    line: string,
-    lineMatches: Match[],
-  ): Array<{ text: string; level?: Level }> {
-    const highlights: Array<{
-      start: number;
-      end: number;
-      level: Level;
-      priority: number;
-    }> = [];
-    for (const match of lineMatches) {
-      const phrase = match.fraseClave ?? match.phrase ?? "";
-      const start = line
-        .toLocaleLowerCase("es")
-        .indexOf(phrase.toLocaleLowerCase("es"));
-      if (phrase && start >= 0)
-        highlights.push({
-          start,
-          end: start + phrase.length,
-          level: match.level,
-          priority: priorities[match.level],
-        });
-    }
-    const parts: Array<{ text: string; level?: Level }> = [];
-    let cursor = 0;
-    for (const highlight of highlights.sort(
-      (a, b) => a.start - b.start || a.priority - b.priority,
-    )) {
-      if (highlight.start < cursor) continue;
-      if (highlight.start > cursor)
-        parts.push({ text: line.slice(cursor, highlight.start) });
-      parts.push({
-        text: line.slice(highlight.start, highlight.end),
-        level: highlight.level,
-      });
-      cursor = highlight.end;
-    }
-    if (cursor < line.length) parts.push({ text: line.slice(cursor) });
-    return parts;
-  }
+  const c = new ConciliacionController();
 
   onMount(() => {
-    void checkBackend();
-    void loadFolder();
+    void c.checkBackend();
+    void c.loadFolder();
   });
-
-  async function loadFolder() {
-    try {
-      const response = await fetch("/api/doc-pdf");
-      if (!response.ok) throw new Error("No fue posible consultar Doc_PDF.");
-      const { names } = (await response.json()) as { names: string[] };
-      await Promise.all(
-        names.map(async (name) => {
-          const response = await fetch(
-            `/api/doc-pdf?name=${encodeURIComponent(name)}`,
-          );
-          if (!response.ok) return;
-          const file = new File([await response.arrayBuffer()], name, {
-            type: "application/pdf",
-          });
-          await readPdf(file, false);
-        }),
-      );
-    } catch (cause) {
-      error =
-        cause instanceof Error
-          ? cause.message
-          : "No fue posible consultar Doc_PDF.";
-    }
-  }
-
-  async function readPdf(file: File, persist = true) {
-    error = "";
-    decision = "";
-    if (file.type !== "application/pdf") {
-      error = "Selecciona un archivo PDF válido.";
-      return;
-    }
-    const id = Date.now() + Math.random();
-    documents = [
-      { id, name: file.name, status: "procesando", histories: [] },
-      ...documents,
-    ];
-    selectedDocumentId = id;
-    try {
-      if (persist) {
-        const formData = new FormData();
-        formData.append("file", file);
-        const stored = await fetch("/api/doc-pdf", {
-          method: "POST",
-          body: formData,
-        });
-        if (!stored.ok)
-          throw new Error("No fue posible guardar el documento en Doc_PDF.");
-      }
-      const response = await fetch(`${backendUrl}/api/conciliacion/analyze`, {
-        method: "POST",
-        body: createAnalysisForm(file, file.name),
-      });
-      if (!response.ok) throw new Error("Backend no Conectado");
-      backendConnected = true;
-      const result = (await response.json()) as {
-        histories: Array<
-          Omit<HistoryItem, "matches"> & { matches: ApiMatch[] }
-        >;
-      };
-      const histories = result.histories.map((history, index) => ({
-        ...history,
-        id: id + index + 1,
-        matches: normalizeMatches(history.matches),
-      }));
-      documents = documents.map((document) =>
-        document.id === id
-          ? { ...document, status: "listo", histories }
-          : document,
-      );
-      selectedHistoryId = null;
-    } catch (cause) {
-      if (
-        cause instanceof TypeError ||
-        (cause instanceof Error && cause.message.includes("Backend"))
-      )
-        backendConnected = false;
-      const message =
-        cause instanceof Error
-          ? `No fue posible leer el PDF: ${cause.message}`
-          : "No fue posible leer el PDF.";
-      error = message;
-      documents = documents.map((document) =>
-        document.id === id
-          ? { ...document, status: "error", error: message }
-          : document,
-      );
-    }
-  }
-
-  function selectDocument(document: DocumentItem) {
-    selectedDocumentId = document.id;
-    selectedHistoryId = document.histories[0]?.id ?? null;
-    decision = "";
-  }
 </script>
 
 <svelte:head
@@ -399,17 +23,17 @@
       <h1>Detectar no equivale a ordenar</h1>
     </div>
     <div class="head-status">
-      <span class:offline={!backendConnected} class="backend-status"
-        >{backendConnected ? "Backend conectado" : "Backend no Conectado"}</span
+      <span class:offline={!c.backendConnected} class="backend-status"
+        >{c.backendConnected ? "Backend conectado" : "Backend no Conectado"}</span
       ><span class="human">✓ &nbsp; Validación humana obligatoria</span>
     </div>
   </div>
 
   <div class="workspace">
-    {#if selectedHistory}
+    {#if c.selectedHistory}
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="modal-overlay" onclick={() => (selectedHistoryId = null)}>
+      <div class="modal-overlay" onclick={() => (c.selectedHistoryId = null)}>
         <div
           class="modal-content analysis"
           onclick={(e) => e.stopPropagation()}
@@ -417,30 +41,30 @@
           <button
             class="modal-close"
             aria-label="Cerrar modal"
-            onclick={() => (selectedHistoryId = null)}>×</button
+            onclick={() => (c.selectedHistoryId = null)}>×</button
           >
-          <h2 class="modal-title">{selectedHistory.patientName}</h2>
+          <h2 class="modal-title">{c.selectedHistory.patientName}</h2>
           <div class="stats">
             <article>
-              Coincidencias<strong>{matches.length}</strong><small
-                >{matches.length
+              Coincidencias<strong>{c.matches.length}</strong><small
+                >{c.matches.length
                   ? "Encontradas en Conducta a Seguir"
                   : "Sin palabras clave en Conducta a Seguir"}</small
               >
             </article>
             <article>
               Alerta principal<strong
-                class:danger={matches[0]?.level === "ROJO"}
-                >{matches[0]?.level ?? "NORMAL"}</strong
+                class:danger={c.matches[0]?.level === "ROJO"}
+                >{c.matches[0]?.level ?? "NORMAL"}</strong
               ><small
-                >{matches[0]
-                  ? (matches[0].fraseClave ?? matches[0].phrase ?? "Sin frase")
+                >{c.matches[0]
+                  ? (c.matches[0].fraseClave ?? c.matches[0].phrase ?? "Sin frase")
                   : "Sin alertas"}</small
               >
             </article>
             <article>
               Historia analizada<strong>✓</strong><small
-                >{selectedHistory.label} de {selectedDocument?.histories
+                >{c.selectedHistory.label} de {c.selectedDocument?.histories
                   .length}</small
               >
             </article>
@@ -448,8 +72,8 @@
           <div class="conduct">
             <p class="eyebrow">CONTENIDO CLÍNICO ANALIZADO</p>
             <div class="conduct-copy">
-              {#each conductLines(selectedHistory.conduct) as line}<p>
-                  {#each conductParts(line, matches) as part}<span
+              {#each conductLines(c.selectedHistory.conduct) as line}<p>
+                  {#each conductParts(line, c.matches) as part}<span
                       class:rojo={part.level === "ROJO"}
                       class:ambar={part.level === "AMARILLO"}
                       class:verde={part.level === "VERDE"}>{part.text}</span
@@ -461,11 +85,11 @@
             <section class="results">
               <p class="eyebrow">RESULTADOS DEL ANÁLISIS</p>
               <h2>
-                {matches.length
+                {c.matches.length
                   ? "Alertas y contextos encontrados"
                   : "Sin alertas detectadas"}
               </h2>
-              {#each matches as match}<article
+              {#each c.matches as match}<article
                   class:high={match.level === "ROJO"}
                   class:medium={match.level === "AMARILLO"}
                   class:low={match.level === "VERDE"}
@@ -481,11 +105,11 @@
                   </div>
                   <p class="context-label">Contexto encontrado</p>
                   <p class="context">
-                    “{#each contextParts(match, selectedHistory.conduct) as part}{#if part.highlighted}<mark
+                    “{#each contextParts(match, c.selectedHistory.conduct) as part}{#if part.highlighted}<mark
                           >{part.text}</mark
                         >{:else}{part.text}{/if}{/each}”
                   </p>
-                </article>{/each}{#if !matches.length}<p class="empty">
+                </article>{/each}{#if !c.matches.length}<p class="empty">
                   La conducta fue leída, pero no contiene palabras clave de la
                   matriz actual.
                 </p>{/if}
@@ -500,16 +124,16 @@
               <div class="actions">
                 <button
                   class="primary"
-                  onclick={() => (decision = "confirmada")}
+                  onclick={() => (c.decision = "confirmada")}
                   >Confirmar alerta</button
-                ><button onclick={() => (decision = "descartada")}
+                ><button onclick={() => (c.decision = "descartada")}
                   >Descartar</button
-                ><button onclick={() => (decision = "aclaracion")}
+                ><button onclick={() => (c.decision = "aclaracion")}
                   >Solicitar aclaración</button
                 >
               </div>
-              {#if decision}<small class="feedback"
-                  >Decisión registrada: {decision}.</small
+              {#if c.decision}<small class="feedback"
+                  >Decisión registrada: {c.decision}.</small
                 >{/if}
             </aside>
           </div>
@@ -524,19 +148,19 @@
         </div>
         <div class="waiting-tools">
           <span
-            >{documents.reduce(
+            >{c.documents.reduce(
               (total, document) => total + document.histories.length,
               0,
             )}</span
           ><button
             class="dictionary-toggle"
-            aria-expanded={dictionaryOpen}
-            onclick={() => (dictionaryOpen = !dictionaryOpen)}
+            aria-expanded={c.dictionaryOpen}
+            onclick={() => (c.dictionaryOpen = !c.dictionaryOpen)}
             title="Abrir diccionario de alertas">⌕</button
           >
         </div>
       </div>
-      {#if dictionaryOpen}<section class="dictionary">
+      {#if c.dictionaryOpen}<section class="dictionary">
           <div class="dictionary-title">
             <div>
               <p class="eyebrow">DICCIONARIO DE ALERTAS</p>
@@ -545,29 +169,29 @@
             <button
               class="dictionary-close"
               aria-label="Cerrar diccionario"
-              onclick={() => (dictionaryOpen = false)}>×</button
+              onclick={() => (c.dictionaryOpen = false)}>×</button
             >
           </div>
           <form
             onsubmit={(event) => {
               event.preventDefault();
-              saveEntry();
+              c.saveEntry();
             }}
           >
             <input
-              bind:value={draftPhrase}
+              bind:value={c.draftPhrase}
               placeholder="Nueva palabra o frase"
               aria-label="Palabra clave"
-            /><select bind:value={draftLevel} aria-label="Nivel de alerta"
+            /><select bind:value={c.draftLevel} aria-label="Nivel de alerta"
               ><option value="ROJO">Rojo</option><option value="AMARILLO"
                 >Ámbar</option
               ><option value="VERDE">Verde</option></select
             ><button class="save-entry" type="submit"
-              >{editingEntryId === null ? "Agregar" : "Guardar"}</button
+              >{c.editingEntryId === null ? "Agregar" : "Guardar"}</button
             >
           </form>
           <div class="dictionary-list">
-            {#each dictionary as entry}<div class="dictionary-row">
+            {#each c.dictionary as entry}<div class="dictionary-row">
                 <span
                   class:rojo={entry.level === "ROJO"}
                   class:ambar={entry.level === "AMARILLO"}
@@ -576,10 +200,10 @@
                 <div>
                   <button
                     aria-label={`Editar ${entry.phrase}`}
-                    onclick={() => startEdit(entry)}>Editar</button
+                    onclick={() => c.startEdit(entry)}>Editar</button
                   ><button
                     aria-label={`Eliminar ${entry.phrase}`}
-                    onclick={() => deleteEntry(entry.id)}>Eliminar</button
+                    onclick={() => c.deleteEntry(entry.id)}>Eliminar</button
                   >
                 </div>
               </div>{/each}
@@ -589,21 +213,21 @@
         Pacientes encontrados dentro de cada historia clínica. El PDF de origen
         se conserva en Doc_PDF.
       </p>
-      {#if documents.length === 0}<p class="waiting-empty">
+      {#if c.documents.length === 0}<p class="waiting-empty">
           No hay pacientes pendientes.
-        </p>{/if}{#each documents as document}<div class="document-group">
+        </p>{/if}{#each c.documents as document}<div class="document-group">
           <small class="source">PDF · {document.name}</small
           >{#if document.status === "procesando"}<p class="processing">
               Leyendo historias...
             </p>{:else if document.status === "error"}<p class="error">
               {document.error}
             </p>{:else}{#each document.histories as history}<button
-                class:active={history.id === selectedHistoryId}
+                class:active={history.id === c.selectedHistoryId}
                 class="document"
                 onclick={() => {
-                  selectedDocumentId = document.id;
-                  selectedHistoryId = history.id;
-                  decision = "";
+                  c.selectedDocumentId = document.id;
+                  c.selectedHistoryId = history.id;
+                  c.decision = "";
                 }}
                 ><span class="patient-icon"
                   >{history.patientName.slice(0, 2).toUpperCase()}</span

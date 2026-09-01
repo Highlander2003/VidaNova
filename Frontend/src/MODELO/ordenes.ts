@@ -1,0 +1,38 @@
+export const orders: string[][] = [
+  [
+    "CG",
+    "Carlos Andrés Gómez",
+    "VN-260812-036 · 64 años",
+    "Hemicolectomía derecha",
+    "2 días vencido",
+    "Escalar autorización",
+    "Cirugía oncológica",
+  ],
+  [
+    "AR",
+    "Ana Lucía Rodríguez",
+    "VN-260811-118 · 48 años",
+    "Biopsia pulmonar guiada",
+    "Vence en 20 h",
+    "Confirmar biopsia",
+    "Referencia EPS",
+  ],
+  [
+    "JM",
+    "Jorge Iván Martínez",
+    "VN-260811-104 · 71 años",
+    "Resonancia de pelvis",
+    "Vence en 3 días",
+    "Revisar solicitud de imagen",
+    "Urología",
+  ],
+  [
+    "SP",
+    "Sandra Patricia Pérez",
+    "VN-260810-089 · 39 años",
+    "Inmunohistoquímica",
+    "En tiempo",
+    "Esperar inmunohistoquímica",
+    "Hematología",
+  ],
+];

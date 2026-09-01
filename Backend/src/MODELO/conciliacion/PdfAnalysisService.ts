@@ -1,5 +1,5 @@
-import { AlertasService, type ReglaAlerta } from "$lib/server/models/alertas/AlertasService";
-import type { NivelAlerta } from "$lib/server/models/alertas/matrizAlertas";
+import { AlertasService, type ReglaAlerta } from "$modelo/alertas/AlertasService";
+import type { NivelAlerta } from "$modelo/alertas/matrizAlertas";
 
 type PdfJsModule = typeof import("pdfjs-dist/legacy/build/pdf.mjs");
 export type HistoriaAnalizada = {

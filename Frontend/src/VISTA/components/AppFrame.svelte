@@ -1,47 +1,24 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { checkBackendHealth } from "$modelo/backend";
+  import { buildSidebarNavItems } from "$modelo/navigation";
 
   export let active = "Centro de navegación";
   export let title = "Vidanova Navigator";
   export let whatsappUnreadCount = 0;
-  const backendUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:3001";
   let backendConnected = false;
 
-  async function checkBackend() {
-    try {
-      const response = await fetch(`${backendUrl}/api/health`);
-      backendConnected = response.ok;
-    } catch {
-      backendConnected = false;
-    }
+  async function refreshBackendStatus() {
+    backendConnected = await checkBackendHealth();
   }
 
   onMount(() => {
-    void checkBackend();
-    const timer = window.setInterval(checkBackend, 30_000);
+    void refreshBackendStatus();
+    const timer = window.setInterval(refreshBackendStatus, 30_000);
     return () => window.clearInterval(timer);
   });
 
-  const items = [
-    { label: "Centro de navegación", icon: "⌂", href: "/" },
-    {
-      label: "Conciliación",
-      icon: "↔",
-      count: 6,
-      countLabel: "Historias clínicas pendientes de verificación humana",
-      href: "/conciliacion",
-    },
-    { label: "Pacientes", icon: "◎", count: 124, href: "/pacientes" },
-    { label: "Órdenes", icon: "▤", count: 27, href: "/ordenes" },
-    { label: "Referencia", icon: "↗", count: 12, href: "/referencia" },
-    {
-      label: "CRM WhatsApp",
-      icon: "◉",
-      count: whatsappUnreadCount,
-      href: "/whatsapp",
-    },
-    { label: "Indicadores", icon: "▥", href: "/indicadores" },
-  ];
+  const items = buildSidebarNavItems(whatsappUnreadCount);
 </script>
 
 <svelte:head><title>{title} | Vidanova</title></svelte:head>

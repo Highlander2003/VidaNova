@@ -1,12 +1,6 @@
 <script lang="ts">
-  import AppFrame from "$lib/components/AppFrame.svelte";
-
-  const indicators = [
-    ["Primera respuesta WhatsApp", "4 min", "Meta: menos de 10 min", "green"],
-    ["Casos dentro del SLA", "92%", "Objetivo institucional: 90%", "green"],
-    ["Órdenes con barrera", "14", "6 requieren escalamiento", "amber"],
-    ["Resultados pendientes", "18", "3 próximos a vencer", "red"],
-  ];
+  import AppFrame from "$vista/components/AppFrame.svelte";
+  import { indicators } from "$modelo/indicadores";
 </script>
 
 <AppFrame active="Indicadores" title="Indicadores operativos">

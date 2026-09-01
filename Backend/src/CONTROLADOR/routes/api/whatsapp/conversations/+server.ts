@@ -1,18 +1,4 @@
-import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { whatsappBusinessService } from "$lib/server/whatsapp/WhatsAppBusinessService";
+import { getConversations } from "$controlador/whatsappController";
 
-export const GET: RequestHandler = ({ url }) => {
-  const phone = url.searchParams.get("phone");
-  const headers = { "Access-Control-Allow-Origin": "*" };
-  if (phone)
-    return json(whatsappBusinessService.markRead(phone) || null, { headers });
-  return json(
-    {
-      conversations: whatsappBusinessService.listConversations(),
-      unreadCount: whatsappBusinessService.getUnreadCount(),
-      configured: whatsappBusinessService.configured,
-    },
-    { headers },
-  );
-};
+export const GET: RequestHandler = (event) => getConversations(event);
